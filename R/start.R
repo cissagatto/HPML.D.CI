@@ -296,7 +296,7 @@ if(parameters$Config$Implementation =="clus"){
   
   cat("\n\nCOPY TO GOOGLE DRIVE")
   origem = parameters$Folders$folderTested
-  destino = paste("nuvem:Label-Chains/",
+  destino = paste("nuvem:Label-Chains-HPML/",
                   parameters$Config$Implementation, "/", 
                   parameters$Config$Similarity, "/", 
                   parameters$Config$Dendrogram, "/", 
