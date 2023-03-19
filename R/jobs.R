@@ -1,7 +1,7 @@
 rm(list = ls())
 
 ##############################################################################
-# LABELS CHAINS HPML                                                         #
+# Labels CHAINS HPML                                                       #  
 # Copyright (C) 2023                                                         #
 #                                                                            #
 # This code is free software: you can redistribute it and/or modify it under #
@@ -12,12 +12,12 @@ rm(list = ls())
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General   #
 # Public License for more details.                                           #
 #                                                                            #
-# Phd Elaine Cecilia Gatto | Prof. Dr. Ricardo Cerri | Prof. Dr. Mauri       #
-# Ferrandin | Prof. Dr. Celine Vens | PhD Felipe Nakano Kenji                #
+# PhD Elaine Cecilia Gatto | Prof. PhD. Ricardo Cerri | Prof. PhD. Mauri     #
+# Ferrandin | Prof. PhD. Celine Vens | PhD. Felipe Nakano Kenji              #
 #                                                                            #
 # Federal University of São Carlos - UFSCar - https://www2.ufscar.br         #
 # Campus São Carlos - Computer Department - DC - https://site.dc.ufscar.br   #
-# Post Graduate Program in Computer Science - PPGCC                          #
+# Post Graduate Program in Computer Science - PPGCC                          # 
 # http://ppgcc.dc.ufscar.br - Bioinformatics and Machine Learning Group      #
 # BIOMAL - http://www.biomal.ufscar.br                                       #
 #                                                                            #
@@ -32,7 +32,8 @@ rm(list = ls())
 # SET WORK SPACE
 ##################################################
 FolderRoot = "~/Labels-Chains-HPML"
-FolderScripts = "~/Labels-Chains-HPML"
+FolderScripts = "~/Labels-Chains-HPML/R"
+
 
 ##################################################
 # PACKAGES
@@ -51,36 +52,36 @@ n = nrow(datasets)
 ##################################################
 # WHICH IMPLEMENTATION WILL BE USED?
 ##################################################
-Implementation.1 = c("python", "clus")
-Implementation.2 = c("p", "c")
+Implementation.1 = c("python")
+Implementation.2 = c("p")
 
 
 ######################################################
 # SIMILARITY MEASURE USED TO MODEL LABEL CORRELATIONS
 ######################################################
-Similarity.1 = c("jaccard","rogers")
-Similarity.2 = c("j", "ro")
+Similarity.1 = c("jaccard")
+Similarity.2 = c("j")
 
 
 ##################################################
 # LINKAGE METRIC USED TO BUILT THE DENDROGRAM
 ##################################################
-Dendrogram.1 = c("ward.D2", "single")
-Dendrogram.2 = c("w", "s")
+Dendrogram.1 = c("ward.D2")
+Dendrogram.2 = c("w")
 
 
 ######################################################
 # CRITERIA USED TO CHOOSE THE BEST HYBRID PARTITION
 ######################################################
-Criteria.1 = c("silho","maf1", "mif1")
-Criteria.2 = c("s", "ma", "mi")
+Criteria.1 = c("silho")
+Criteria.2 = c("s")
 
 
 ######################################################
 FolderJobs = paste(FolderRoot, "/jobs", sep="")
 if(dir.exists(FolderJobs)==FALSE){dir.create(FolderJobs)}
 
-FolderCF = "/Labels-Chains-HPML/config-files-1"
+FolderCF = "/Labels-Chains-HPML/config-files-ufscar"
 
 
 # IMPLEMENTAÇÃO
@@ -133,12 +134,8 @@ while(p<=length(Implementation.1)){
           cat("\n\t", Criteria.1[w])
           cat("\n\t", ds$Name)
           
-          name = paste("lc", 
-                       Implementation.2[p], "", 
-                       Similarity.2[s], "", 
-                       Dendrogram.2[f], "", 
-                       Criteria.2[w], "-",
-                       ds$Name, sep="")  
+          
+          name = paste("labels-", ds$Name, sep="")  
           
           # directory name - "/scratch/eg-3s-bbc1000"
           scratch.name = paste("/tmp/", name, sep = "")
@@ -222,7 +219,7 @@ while(p<=length(Implementation.1)){
           write("", file = output.file, append = TRUE)
           write("echo =============================================================", 
                 file = output.file, append = TRUE)
-          str.5 = paste("echo SBATCH: RUNNING LABELS CHAINS HPML FOR ", 
+          str.5 = paste("echo SBATCH: RUNNING Labels CHAINS HPML FOR ", 
                         ds$Name, sep="")
           write(str.5, file = output.file, append = TRUE)
           write("echo =============================================================", 
@@ -243,7 +240,7 @@ while(p<=length(Implementation.1)){
           
           write("", file = output.file, append = TRUE)
           write("echo LISTING SCRATCH", file = output.file, append = TRUE)
-          write("cd /scratch", file = output.file, append = TRUE)
+          write("cd /tmp", file = output.file, append = TRUE)
           write("ls ", file = output.file, append = TRUE)
           
           
@@ -262,7 +259,7 @@ while(p<=length(Implementation.1)){
           write("echo COPYING SINGULARITY", file = output.file, append = TRUE)
           str.30 = paste("cp /home/u704616/Experimentos-1.sif ", scratch.name, sep ="")
           write(str.30 , file = output.file, append = TRUE)
-     
+          
           
           write("", file = output.file, append = TRUE)
           write("echo CRIANDO TESTED", file = output.file, append = TRUE)
@@ -334,14 +331,14 @@ while(p<=length(Implementation.1)){
           write(" ", file = output.file, append = TRUE)
           write("echo INICIANDO INSTANCIA", file = output.file, append = TRUE)
           str = paste("singularity instance start --bind ~/.config/rclone/:/root/.config/rclone ", 
-                      scratch.name, "/Experimentos-1.sif EXPLC", a, sep="")
+                      scratch.name, "/Experimentos-1.sif EXPLa", a, sep="")
           write(str, file = output.file, append = TRUE)
           
           
           write(" ", file = output.file, append = TRUE)
           write("echo EXECUTANDO", file = output.file, append = TRUE)
-          str = paste("singularity run --app Rscript instance://EXPLC",
-                      a, " /Labels-Chains-HPML/R/start.R \"/Labels-Chains-HPML/config-files-1/",
+          str = paste("singularity run --app Rscript instance://EXPLa",
+                      a, " /Labels-Chains-HPML/R/start.R \"/Labels-Chains-HPML/config-files-ufscar/",
                       Implementation.1[p], "/", Similarity.1[s], "/", 
                       Dendrogram.1[f], "/", Criteria.1[w], "/", 
                       config.file.name, "\"", sep="")
@@ -350,7 +347,7 @@ while(p<=length(Implementation.1)){
           
           write(" ", file = output.file, append = TRUE)
           write("echo STOP INSTANCIA", file = output.file, append = TRUE)
-          str = paste("singularity instance stop EXPLC", a, sep="")
+          str = paste("singularity instance stop EXPLa", a, sep="")
           write(str, file = output.file, append = TRUE)
           
           
