@@ -409,9 +409,8 @@ gather.preds.python.silho <- function(parameters) {
                          parameters$DatasetInfo$LabelEnd, by=1)
     test.mldr = mldr_from_dataframe(test.dataset, labelIndices = labels.indices)
     
-    utiml.threshold <- scut_threshold(y_proba, test.mldr)
     y_pred <- data.frame(as.matrix(fixed_threshold(y_proba, 
-                                                    utiml.threshold)))
+                                                   threshold = 0.5)))
     
     setwd(Folder.Split.Test)
     write.csv(y_pred, "folder_pred.csv", row.names = FALSE)
