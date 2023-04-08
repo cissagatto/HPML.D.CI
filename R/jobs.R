@@ -81,7 +81,7 @@ Criteria.2 = c("s")
 FolderJobs = paste(FolderRoot, "/jobs", sep="")
 if(dir.exists(FolderJobs)==FALSE){dir.create(FolderJobs)}
 
-FolderCF = "/Labels-Chains-HPML/config-files-ufscar"
+FolderCF = "/Labels-Chains-HPML/config-files-apptainer"
 
 
 # IMPLEMENTAÇÃO
@@ -176,11 +176,11 @@ while(p<=length(Implementation.1)){
           write("#SBATCH -t 128:00:00", file = output.file, append = TRUE)
           
           # uncomment this line if you need to use all node memory
-          # write("#SBATCH --mem=0", file = output.file, append = TRUE)
+          write("#SBATCH --mem=0", file = output.file, append = TRUE)
           
           # amount of node memory you want to use
           # comment this line if you are using -mem=0
-          write("#SBATCH --mem-per-cpu=30GB", file = output.file, append = TRUE)
+          # write("#SBATCH --mem-per-cpu=30GB", file = output.file, append = TRUE)
           # write("#SBATCH -mem=0", file = output.file, append = TRUE)
           
           # email to receive notification
@@ -257,7 +257,7 @@ while(p<=length(Implementation.1)){
           
           write("", file = output.file, append = TRUE)
           write("echo COPYING SINGULARITY", file = output.file, append = TRUE)
-          str.30 = paste("cp /home/u704616/Experimentos-3.sif ", scratch.name, sep ="")
+          str.30 = paste("cp /home/u704616/Experimentos-6.sif ", scratch.name, sep ="")
           write(str.30 , file = output.file, append = TRUE)
           
           
@@ -331,14 +331,14 @@ while(p<=length(Implementation.1)){
           write(" ", file = output.file, append = TRUE)
           write("echo INICIANDO INSTANCIA", file = output.file, append = TRUE)
           str = paste("singularity instance start --bind ~/.config/rclone/:/root/.config/rclone ", 
-                      scratch.name, "/Experimentos-3.sif EXPLa", a, sep="")
+                      scratch.name, "/Experimentos-6.sif EXPLa", a, sep="")
           write(str, file = output.file, append = TRUE)
           
           
           write(" ", file = output.file, append = TRUE)
           write("echo EXECUTANDO", file = output.file, append = TRUE)
           str = paste("singularity run --app Rscript instance://EXPLa",
-                      a, " /Labels-Chains-HPML/R/start.R \"/Labels-Chains-HPML/config-files-ufscar/",
+                      a, " /Labels-Chains-HPML/R/labels.R \"/Labels-Chains-HPML/config-files-apptainer/",
                       Implementation.1[p], "/", Similarity.1[s], "/", 
                       Dendrogram.1[f], "/", Criteria.1[w], "/", 
                       config.file.name, "\"", sep="")

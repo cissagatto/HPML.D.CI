@@ -10,18 +10,26 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General   #
 # Public License for more details.                                           #
 #                                                                            #
-# Phd Elaine Cecilia Gatto | Prof. Dr. Ricardo Cerri | Prof. Dr. Mauri       #
-# Ferrandin | Prof. Dr. Celine Vens | PhD Felipe Nakano Kenji                #
+# 1 - PhD Elaine Cecilia Gatto | Prof PhD Ricardo Cerri                      #
+# 2 - Prof PhD Mauri Ferrandin                                               #
+# 3 - Prof PhD Celine Vens | PhD Felipe Nakano Kenji                         #
+# 4 - Prof PhD Jesse Read                                                    #
 #                                                                            #
-# Federal University of São Carlos - UFSCar - https://www2.ufscar.br         #
-# Campus São Carlos - Computer Department - DC - https://site.dc.ufscar.br   #
-# Post Graduate Program in Computer Science - PPGCC                          #
-# http://ppgcc.dc.ufscar.br - Bioinformatics and Machine Learning Group      #
-# BIOMAL - http://www.biomal.ufscar.br                                       #
+# 1 = Federal University of São Carlos - UFSCar - https://www2.ufscar.br     #
+# Campus São Carlos | Computer Department - DC - https://site.dc.ufscar.br | #
+# Post Graduate Program in Computer Science - PPGCC                          # 
+# http://ppgcc.dc.ufscar.br | Bioinformatics and Machine Learning Group      #
+# BIOMAL - http://www.biomal.ufscar.br                                       # 
 #                                                                            #
-# Katholieke Universiteit Leuven Campus Kulak Kortrijk Belgium               #
+# 2 - Federal University of Santa Catarina Campus Blumenau - UFSC            #
+# https://ufsc.br/                                                           #
+#                                                                            #
+# 3 - Katholieke Universiteit Leuven Campus Kulak Kortrijk Belgium           #
 # Medicine Department - https://kulak.kuleuven.be/                           #
 # https://kulak.kuleuven.be/nl/over_kulak/faculteiten/geneeskunde            #
+#                                                                            #
+# 4 - Ecole Polytechnique | Institut Polytechnique de Paris | 1 rue Honoré   #
+# d’Estienne d’Orves - 91120 - Palaiseau - FRANCE                            #
 #                                                                            #
 ##############################################################################
 
@@ -242,16 +250,20 @@ build.python.silho <- function(parameters) {
       ##################################################################
       # EXECUTE ECC PYTHON
       str.execute = paste("python3 ", parameters$Folders$folderUtils,
-                          "/Python/ecc-python/main.py ", 
+                          "/Python/main.py ", 
                           train.name.cluster.csv, " ",
                           val.name.cluster.csv, " ",
                           test.name.cluster.csv, " ", 
                           start = as.numeric(parameters$DatasetInfo$AttEnd), " ", 
                           Folder.Tested.Group,
                           sep="")
-      
       # EXECUTA
+      start <- proc.time()
       res = print(system(str.execute))
+      tempo = data.matrix((proc.time() - start))
+      tempo = data.frame(t(tempo))
+      write.csv(tempo, paste(Folder.Tested.Group, "/runtime-cluster.csv", 
+                             sep=""))
       
       if(res!=0){
         break
@@ -307,12 +319,12 @@ build.python.silho <- function(parameters) {
 ######################################################################
 #
 ######################################################################
-gather.preds.python.silho <- function(parameters) {
+gather.preds.rf.silho <- function(parameters) {
   
   f = 1
   gatherR <- foreach(f = 1:parameters$Config$Number.Folds) %dopar% {
-  # while(f<=parameters$Config$Number.Folds){
-  
+    # while(f<=parameters$Config$Number.Folds){
+    
     cat("\nFold: ", f)
     
     FolderRoot = "~/Labels-Chains-HPML"
@@ -325,27 +337,19 @@ gather.preds.python.silho <- function(parameters) {
     source("utils.R")
     
     ###################################################################
-    apagar = c(0)
-    y_true = data.frame(apagar)
-    y_proba = data.frame(apagar)
-    y_pred = data.frame(apagar)
-    
-    ###################################################################
-    Folder.Split.Test = paste(parameters$Folders$folderTested, 
+    Folder.Split.Test = paste(parameters$Folders$folderTested,
                               "/Split-", f, sep = "")
     
     
     #########################################################################
-    cat("\nGetting information about pythonters")
+    cat("\nGetting information about clusters")
     best.part.info = data.frame(parameters$All.Partitions$best.part.info)
     all.partitions.info = data.frame(parameters$All.Partitions$all.partitions.info)
     all.total.labels = data.frame(parameters$All.Partitions$all.total.labels)
     
     best.part.info.f = data.frame(filter(best.part.info, num.fold == f))
-    all.total.labels.f = data.frame(filter(all.total.labels, num.fold ==
-                                             f))
+    all.total.labels.f = data.frame(filter(all.total.labels, num.fold == f))
     partition = data.frame(filter(all.partitions.info, num.fold == f))
-    
     
     #########################################################################
     cat("\nCreating Folders from Best Partitions and Splits Tests")
@@ -355,116 +359,239 @@ gather.preds.python.silho <- function(parameters) {
     Folder.Tested.Split = paste(parameters$Folders$folderTested,
                                 "/Split-", f, sep = "")
     
-    Folder.BP = paste(parameters$Folders$folderPartitions, "/", 
+    Folder.BP = paste(parameters$Folders$folderPartitions, "/",
                       parameters$Config$Dataset.Name,sep = "")
     
     Folder.BPF = paste(Folder.BP, "/Split-", f, sep = "")
     
-    Folder.BPGP = paste(Folder.BPF, "/Partition-", 
+    Folder.BPGP = paste(Folder.BPF, "/Partition-",
                         best.part.info.f$num.part, sep = "")
     
     
     #########################################################################
+    cat("\nOpen Test file")
+    test.name.file = paste(parameters$Folders$folderCVTS, "/",
+                           parameters$Config$Dataset.Name, "-Split-Ts-",
+                           f, ".csv", sep = "")
+    test.dataset.original = data.frame(read.csv(test.name.file))
+    
+    labels.indices = seq(parameters$DatasetInfo$LabelStart, 
+                         parameters$DatasetInfo$LabelEnd, by=1)
+    
+    test.mldr = mldr_from_dataframe(test.dataset.original, 
+                                    labelIndices = labels.indices)
+    cat("\nOpen Train file")
+    train.name.file = paste(parameters$Folders$folderCVTR, "/",
+                            parameters$Config$Dataset.Name, "-Split-Tr-",
+                            f, ".csv", sep = "")
+    train.dataset.original = data.frame(read.csv(train.name.file))
+    train.mldr = mldr_from_dataframe(train.dataset.original, 
+                                     labelIndices = labels.indices)
+    
+    
+    #########################################################################
+    cat("\nOpen Validation file")
+    val.name.file = paste(parameters$Folders$folderCVVL,
+                          "/", parameters$Config$Dataset.Name,
+                          "-Split-Vl-", f, ".csv", sep = "")
+    val.dataset.original = data.frame(read.csv(val.name.file))
+    val.mldr = mldr_from_dataframe(val.dataset.original, 
+                                   labelIndices = labels.indices)
+    
+    
+    #########################################################################
+    tv = rbind(train.dataset.original, val.dataset.original)
+    mldr.tv = mldr_from_dataframe(tv, labelIndices = labels.indices)
+    
+    ###################################################################
+    apagar = c(0)
+    y.true.final = data.frame(apagar)
+    y.pred.proba.final = data.frame(apagar)
+    runtime.final = data.frame(cluster=c(0), user.self=c(0), 
+                               sys.self=c(0), elapsed=c(0), 
+                               user.child=c(0),  sys.child=c(0))
+    
+    #########################################################################
+    cat("\n")
+    clusters.num = c(0)
     g = 1
     while (g <= best.part.info.f $num.group) {
-      cat("\n\nGroup: ", g)
+      
+      cat("\nGroup: ", g)
       
       Folder.Group.Test = paste(Folder.Split.Test, "/Group-", g, sep = "")
       
-      cat("\nGather y_true")
       setwd(Folder.Group.Test)
-      y_true_gr = data.frame(read.csv("cluster_true.csv"))
-      y_true = cbind(y_true, y_true_gr)
+      pred.proba = data.frame(read.csv("cluster_proba.csv"))
+      true = data.frame(read.csv("cluster_true.csv"))
+      runtime = data.frame(read.csv("runtime-cluster.csv"))
       
-      setwd(Folder.Group.Test)
-      cat("\nGather y_predict")
-      y_proba_gr = data.frame(read.csv("cluster_proba.csv"))
-      y_proba = cbind(y_proba, y_proba_gr)
+      if(nrow(pred.proba)!=nrow(test.mldr$dataset)){
+        cat("\nNúmero incorreto de instâncias", nrow(predictions))
+        break
+        
+      } else {
+        partition.g = data.frame(filter(partition, group == g))
+        y.pred.proba.final = cbind(y.pred.proba.final, pred.proba)
+        y.true.final = cbind(y.true.final, true)
+        clusters.num[g] = g
+        names(runtime)[1] = "cluster"
+        runtime.final = rbind(runtime.final, runtime)    
+      }
       
       g = g + 1
       gc()
     }
     
+    ########################################
+    runtime.final = runtime.final[-1,]
+    runtime.final$cluster = clusters.num
+    write.csv(runtime.final, 
+              paste(Folder.Tested.Split, "/runtime-clusters.csv", sep=""), 
+              row.names = FALSE)
     
-    #########################################################################
-    cat("\n\nSave files")
-    y_proba = y_proba[, -1]
-    y_true = y_true[, -1]
+    ########################################
+    y.pred.proba.final = y.pred.proba.final[, -1]
+    y.true.final = y.true.final[,-1]
     
-    nomes.rotulos = colnames(y_proba)
+    ########################################
+    names(y.true.final) = parameters$Config$NamesLabels
+    names(y.pred.proba.final) = parameters$Config$NamesLabels
     
-    setwd(Folder.Split.Test)
-    write.csv(y_proba, "folder_proba.csv", row.names = FALSE)
-    write.csv(y_true, "folder_true.csv", row.names = FALSE)
+    ########################################
+    nome.true = paste(Folder.Split.Test, "/y_true.csv", sep="")
+    nome.pred.proba = paste(Folder.Split.Test, "/y_pred_proba.csv", sep="")
+    nome.pred.bin = paste(Folder.Split.Test, "/y_pred_bin.csv", sep="")
     
+    ########################################
+    write.csv(y.true.final, nome.true, row.names = FALSE)
+    write.csv(y.pred.proba.final, nome.pred.proba, row.names = FALSE)
     
-    #########################################################################
-    cat("\n\nOpen Test file")
-    test.name.file = paste(parameters$Folders$folderCVTS, "/",
-                           parameters$Config$Dataset.Name, "-Split-Ts-",
-                           f, ".csv", sep = "")
-    test.dataset = data.frame(read.csv(test.name.file))
+    ############################################################
+    y.true.2 = data.frame(sapply(y.true.final, function(x) as.numeric(as.character(x))))
+    y.true.3 = mldr_from_dataframe(y.true.2, 
+                                   labelIndices = seq(1,ncol(y.true.2)), 
+                                   name = "y.true.2")
     
-    labels.indices = seq(parameters$DatasetInfo$LabelStart,
-                         parameters$DatasetInfo$LabelEnd, by=1)
-    test.mldr = mldr_from_dataframe(test.dataset, labelIndices = labels.indices)
+    ########################################################################
+    y_threshold_05 <- data.frame(as.matrix(fixed_threshold(y.pred.proba.final,
+                                                           threshold = 0.5)))
+    y_threshold_05 = data.frame(as.matrix(y_threshold_05))
+    write.csv(y_threshold_05, 
+              paste(Folder.Split.Test, "/y_pred_thr05.csv", sep=""),
+              row.names = FALSE)
     
-    y_pred <- data.frame(as.matrix(fixed_threshold(y_proba, 
-                                                   threshold = 0.5)))
+    ########################################################################
+    y_threshold_card = lcard_threshold(as.matrix(y.pred.proba.final), 
+                                       mldr.tv$measures$cardinality,
+                                       probability = F)
+    y_threshold_card = data.frame(as.matrix(y_threshold_card))
+    write.csv(y_threshold_card, 
+              paste(Folder.Split.Test, "/y_pred_thrLC.csv", sep=""),
+              row.names = FALSE)
     
-    setwd(Folder.Split.Test)
-    write.csv(y_pred, "folder_pred.csv", row.names = FALSE)
     
     #####################################################################
-    roc.curva(predictions = y_pred,
-              probabilities = y_proba,
-              test = test.mldr,
-              Folder = Folder.Split.Test)
+    nome.true = paste(Folder.Split.Test, "/y_true.csv", sep="")
+    nome.pred.proba = paste(Folder.Split.Test, "/y_pred_proba.csv", sep="")
+    nome.thr.05 = paste(Folder.Split.Test, "/y_pred_thr05.csv", sep="")
+    nome.thr.LC = paste(Folder.Split.Test, "/y_pred_thrLC.csv", sep="")
     
+    save.pred.proba = paste(Folder.Split.Test, "/pred-proba-auprc.csv", sep="")
+    save.thr05 = paste(Folder.Split.Test, "/thr-05-auprc.csv", sep="")
+    save.thrLC = paste(Folder.Split.Test, "/thr-lc-auprc.csv", sep="")
     
-    ##############################################
-    cat("\nInformações das predições")
-    predictions.information(nomes.rotulos=nomes.rotulos, 
-                            proba = y_proba, 
-                            preds = y_pred, 
-                            trues = y_true, 
-                            folder = Folder.Split.Test)
-    
-    
-    #######################################################################
-    pred = paste(Folder.Split.Test, "/folder_proba.csv", sep="" )
-    true = paste(Folder.Split.Test, "/folder_true.csv", sep="" )
+    #################################################################
     str.execute = paste("python3 ",
                         parameters$Folders$folderUtils,
                         "/Python/auprc.py ",
-                        true, " ",
-                        pred,  " ",
-                        Folder.Split.Test,
+                        nome.true, " ",
+                        nome.pred.proba, " ",
+                        save.pred.proba, " ",
                         sep="")
-    
-    # EXECUTA
     res = print(system(str.execute))
-    
     if(res!=0){
       break
     }
     
+    #################################################################
+    str.execute = paste("python3 ",
+                        parameters$Folders$folderUtils,
+                        "/Python/auprc.py ",
+                        nome.true, " ",
+                        nome.thr.05, " ",
+                        save.thr05, " ",
+                        sep="")
+    res = print(system(str.execute))
+    if(res!=0){
+      break
+    }
     
-    #####################################################################
-    cat("\nSave original and pruned predictions")
-    pred.o = paste(colnames(y_pred), "-pred", sep="")
-    names(y_pred) = pred.o
+    #################################################################
+    str.execute = paste("python3 ",
+                        parameters$Folders$folderUtils,
+                        "/Python/auprc.py ",
+                        nome.true, " ",
+                        nome.thr.LC, " ",
+                        save.thrLC, " ",
+                        sep="")
+    res = print(system(str.execute))
+    if(res!=0){
+      break
+    }
     
-    true.labels = paste(colnames(y_true), "-true", sep="")
-    names(y_true) = true.labels
+    ####################################################
+    names = paste(parameters$Config$NamesLabels, "-proba", sep="")
+    y.pred.proba.final = data.frame(y.pred.proba.final)
+    names(y.pred.proba.final) = names
+    rm(names)
     
-    proba = paste(colnames(y_proba), "-proba", sep="")
-    names(y_proba) = proba
+    names  = paste(parameters$Config$NamesLabels, "-true", sep="")
+    y.true.final = data.frame(y.true.final)
+    names(y.true.final) = names 
+    rm(names)
     
-    all.predictions = cbind(y_proba, y_pred, y_true)
+    names  = paste(parameters$Config$NamesLabels, "-thr-05", sep="")
+    y_threshold_05 = data.frame(y_threshold_05)
+    names(y_threshold_05) = names 
+    rm(names)
     
-    setwd(Folder.Split.Test)
-    write.csv(all.predictions, "folder-predictions.csv", row.names = FALSE)
+    names  = paste(parameters$Config$NamesLabels, "-thr-lc", sep="")
+    y_threshold_card = data.frame(as.matrix(y_threshold_card))
+    names(y_threshold_card) = names 
+    rm(names)
+    
+    all.predictions = cbind(y.true.final, y.pred.proba.final,
+                            y_threshold_05, y_threshold_card)
+    write.csv(all.predictions, 
+              paste(Folder.Split.Test, "/folder-predictions.csv", sep=""), 
+              row.names = FALSE)
+    
+    
+    ##############################################
+    names(y.true.final) = parameters$Config$NamesLabels
+    names(y.pred.proba.final) = parameters$Config$NamesLabels
+    names(y_threshold_card) = parameters$Config$NamesLabels
+    names(y_threshold_card) = parameters$Config$NamesLabels
+    
+    matrix.confusao(true = y.true.final, pred = y_threshold_05, 
+                    type = "thr-05", salva = Folder.Split.Test, 
+                    nomes.rotulos = parameters$Names.Labels$Labels)
+    
+    matrix.confusao(true = y.true.final, pred = y_threshold_card, 
+                    type = "thr-lc", salva = Folder.Split.Test, 
+                    nomes.rotulos = parameters$Names.Labels$Labels)
+    
+    
+    #########################################################################    
+    roc.curva(f = f, y_pred = y.pred.proba.final, test = test.mldr,
+              Folder = Folder.Split.Test, nome = "pred-proba")
+    
+    roc.curva(f = f, y_pred = y_threshold_card, test = test.mldr,
+              Folder = Folder.Split.Test, nome = "thr-lc")
+    
+    roc.curva(f = f, y_pred = y_threshold_05, test = test.mldr,
+              Folder = Folder.Split.Test, nome = "thr-05")
     
     
     #f = f + 1
@@ -473,267 +600,266 @@ gather.preds.python.silho <- function(parameters) {
   
   gc()
   cat("\n#####################################################")
-  cat("\n# Python Silhouette: end gather.preds.python.silho  #")
+  cat("\n# RF SILHOUETTE: End gather.preds.python.silho      #")
   cat("\n######################################################")
   cat("\n\n\n\n")
   
 } # end da função
 
 
-#######################################################################
+
+
+############################################################################
 #
-#######################################################################
-evaluate.python.silho <- function(parameters) {
+############################################################################
+evaluate.python.silho <- function(parameters){
   
   f = 1
-  avalParal <- foreach(f = 1:parameters$Config$Number.Folds) %dopar% {
+  avaliaParalel <- foreach (f = 1:parameters$Config$Number.Folds) %dopar%{
+    # while(f<=parameters$Config.File$Number.Folds){
     
+    #########################################################################
     cat("\nFold: ", f)
     
+    ##########################################################################
     FolderRoot = "~/Labels-Chains-HPML"
     FolderScripts = "~/Labels-Chains-HPML/R"
     
-    # data frame
-    apagar = c(0)
-    confMatPartitions = data.frame(apagar)
-    partitions = c()
+    ##########################################################################
+    setwd(FolderScripts)
+    source("libraries.R")
     
-    Folder.Tested.Split = paste(parameters$Folders$folderTested,
-                                "/Split-", f, sep = "")
-    
-    # get the true and predict lables
-    setwd(Folder.Tested.Split)
-    y_pred = data.frame(read.csv("folder_pred.csv"))
-    y_true = data.frame(read.csv("folder_true.csv"))
-    y_pred = data.frame(read.csv("folder_proba.csv"))
-    
-    # compute measures multilabel
-    y_true2 = data.frame(sapply(y_true, function(x)
-      as.numeric(as.character(x))))
-    y_true3 = mldr_from_dataframe(y_true2 ,
-                                  labelIndices = seq(1, ncol(y_true2)),
-                                  name = "y_true2")
-    
-    y_pred2 = sapply(y_pred, function(x)
-      as.numeric(as.character(x)))
-    
-    #cat("\n\t\tSave Confusion Matrix")
-    setwd(Folder.Tested.Split)
-    salva3 = paste("utiml-conf-mat-fold-", f, ".txt", sep = "")
-    sink(file = salva3, type = "output")
-    confmat = multilabel_confusion_matrix(y_true3, y_pred2)
-    print(confmat)
-    sink()
-    
-    # creating a data frame
-    confMatPart = multilabel_evaluate(confmat)
-    confMatPart = data.frame(confMatPart)
-    names(confMatPart) = paste("Fold-", f, sep = "")
-    namae = paste("Split-", f, "-Evaluated.csv", sep = "")
-    write.csv(confMatPart, namae)
+    setwd(FolderScripts)
+    source("utils.R")
     
     
-    ###############################################################
-    conf.mat = data.frame(confmat$TPl, confmat$FPl,
-                          confmat$FNl, confmat$TNl)
-    names(conf.mat) = c("TP", "FP", "FN", "TN")
+    ###################################################################
+    FolderSplit = paste(parameters$Folders$folderTested,
+                        "/Split-", f, sep = "")
     
+    #####################################################################
+    nome.true = paste(FolderSplit, "/y_true.csv", sep="")
+    nome.pred.proba = paste(FolderSplit, "/y_pred_proba.csv", sep="")
+    nome.thr.05 = paste(FolderSplit, "/y_pred_thr05.csv", sep="")
+    nome.thr.LC = paste(FolderSplit, "/y_pred_thrLC.csv", sep="")
     
-    # porcentagem
-    conf.mat.perc = data.frame(conf.mat/nrow(y_true))
-    names(conf.mat.perc) = c("TP.perc", "FP.perc", "FN.perc", "TN.perc")
-    
-    # calculando o total de rótulos classificados errados
-    wrong = conf.mat$FP + conf.mat$FN
-    
-    # calculando a porcentagem de rótulos classificados errados
-    wrong.perc = wrong/nrow(y_true)
-    
-    # calculando o total de rótulos classificados corretamente
-    correct = conf.mat$TP + conf.mat$TN
-    
-    # calculando a porcentagem de rótulos classificados corretamente
-    correct.perc = correct/nrow(y_true)
-    
-    conf.mat = data.frame(conf.mat, conf.mat.perc, wrong, correct, 
-                          wrong.perc, correct.perc)
-    
-    setwd(Folder.Tested.Split)
-    write.csv(conf.mat, "utiml-matrix-confusion.csv")
-    
-    gc()
-  } # end folds
-  
-  gc()
-  cat("\n############################################################")
-  cat("\n# Python Silhouette: End evaluate.python.silho             #")
-  cat("\n############################################################")
-  cat("\n\n\n\n")
-}
-
-
-
-
-######################################################################
-#
-######################################################################
-gather.eval.python.silho <- function(parameters) {
-  
-  
-  ##########################################################################
-  apagar = c(0)
-  avaliado.final = data.frame(apagar)
-  nomes = c("")
-  
-  
-  final.proba.auc = c(0)
-  final.proba.micro.auc = c(0)
-  final.proba.macro.auc = c(0)
-  final.proba.ma.mi.auc.fold = c(0)
-  final.proba.ma.mi.auc.cluster = c(0)
-  
-  final.pred.micro.auc = c(0)
-  final.pred.macro.auc = c(0)
-  final.pred.auc = c(0)
-  
-  
-  # from fold = 1 to number_folders
-  f = 1
-  while(f<=parameters$Config$Number.Folds){
-    
-    cat("\n#======================================================")
-    cat("\n# Fold: ", f)
-    cat("\n#======================================================\n")
-    
-    # vector with names
-    measures = c("accuracy","average-precision","clp","coverage","F1",
-                 "hamming-loss","macro-AUC", "macro-F1","macro-precision",
-                 "macro-recall","margin-loss","micro-AUC","micro-F1",
-                 "micro-precision","micro-recall","mlp","one-error",
-                 "precision","ranking-loss", "recall","subset-accuracy","wlp")
+    #####################################################################
+    y_pred_proba = data.frame(read.csv(nome.pred.proba))
+    y_pred_thr_05 = data.frame(read.csv(nome.thr.05))
+    y_pred_thr_lc = data.frame(read.csv(nome.thr.LC))
+    y_true = data.frame(read.csv(nome.true))
     
     ##########################################################################
-    # "/dev/shm/ej3-GpositiveGO/Tested/Split-1"
-    Folder.Tested.Split = paste(parameters$Folders$folderTested,
-                                "/Split-", f, sep="")
+    y.true.2 = data.frame(sapply(y_true, function(x) as.numeric(as.character(x))))
+    y.true.3 = mldr_from_dataframe(y.true.2, 
+                                   labelIndices = seq(1,ncol(y.true.2)), 
+                                   name = "y.true.2")
+    y_pred_proba = sapply(y_pred_proba, function(x) as.numeric(as.character(x)))
+    y_pred_thr_05 = sapply(y_pred_thr_05, function(x) as.numeric(as.character(x)))
+    y_pred_thr_lc = sapply(y_pred_thr_lc, function(x) as.numeric(as.character(x)))
     
     
-    ######################################################################
-    setwd(Folder.Tested.Split)
-    str = paste("Split-", f, "-Evaluated.csv", sep="")
-    avaliado = data.frame(read.csv(str))
-    avaliado.final= cbind(avaliado.final, avaliado[,2])
-    nomes[f] = paste("Fold-", f, sep="")
+    ##########################################################################    
+    avaliacao(f = f, y_true = y.true.3, y_pred = y_pred_proba,
+              salva = FolderSplit, nome = "pred-proba")
     
+    avaliacao(f = f, y_true = y.true.3, y_pred = y_pred_thr_05,
+              salva = FolderSplit, nome = "thr-05")
     
-    #################################
-    setwd(Folder.Tested.Split)
-    proba.auc = data.frame(read.csv("proba-auc.csv"))
-    names(proba.auc) = c("fold", "value")
-    final.proba.auc = rbind(final.proba.auc, proba.auc)
+    avaliacao(f = f, y_true = y.true.3, y_pred = y_pred_thr_lc,
+              salva = FolderSplit, nome = "thr-lc")
     
-    proba.micro.auc = data.frame(read.csv("proba-micro-auc.csv"))
-    names(proba.micro.auc) = c("fold", "value")
-    final.proba.micro.auc = rbind(final.proba.micro.auc, proba.micro.auc)
-    
-    proba.macro.auc = data.frame(read.csv("proba-macro-auc.csv"))
-    names(proba.macro.auc) = c("fold", "value")
-    final.proba.macro.auc = rbind(final.proba.macro.auc, proba.macro.auc)
-    
-    proba.ma.mi.auc.fold = data.frame(read.csv("folder_proba_ma_mi.csv"))
-    final.proba.ma.mi.auc.fold = rbind(final.proba.ma.mi.auc.fold,
-                                       proba.ma.mi.auc.fold)
-    
-    ##################
-    pred.auc = data.frame(read.csv("bin-auc.csv"))
-    names(pred.auc) = c("fold", "value")
-    final.pred.auc = rbind(final.pred.auc, pred.auc)
-    
-    pred.micro.auc = data.frame(read.csv("bin-micro-auc.csv"))
-    names(pred.micro.auc) = c("fold", "value")
-    final.pred.micro.auc = rbind(final.pred.micro.auc, pred.micro.auc)
-    
-    pred.macro.auc = data.frame(read.csv("bin-macro-auc.csv"))
-    names(pred.macro.auc) = c("fold", "value")
-    final.pred.macro.auc = rbind(final.pred.macro.auc, pred.macro.auc)
-    
-    f = f + 1
+    # f = f + 1
     gc()
-    
-  } # end folds
-  
-  
-  fold = seq(1, number_folds, by =1)
-  
-  final.proba.auc = final.proba.auc[-1,]
-  final.proba.auc = data.frame(fold, auc = final.proba.auc$value)
-  
-  final.proba.micro.auc = final.proba.micro.auc[-1,]
-  final.proba.micro.auc = data.frame(fold, micro.auc = final.proba.micro.auc$value)
-  
-  final.proba.macro.auc = final.proba.macro.auc[-1,]
-  final.proba.macro.auc = data.frame(fold, macro.auc = final.proba.macro.auc$value)
-  
-  final.proba.ma.mi.auc.fold = final.proba.ma.mi.auc.fold[-1,]
-  final.proba.ma.mi.auc.fold = data.frame(fold, final.proba.ma.mi.auc.fold)
-  
-  setwd(parameters$Folders$folderTested)
-  write.csv(final.proba.auc, "proba-auc.csv", row.names = FALSE)  
-  write.csv(final.proba.macro.auc, "proba-macro-auc.csv", row.names = FALSE)  
-  write.csv(final.proba.micro.auc, "proba-micro-auc.csv", row.names = FALSE)
-  write.csv(final.proba.ma.mi.auc.fold, "proba-ma-mi-auprc-fold.csv", row.names = FALSE)  
-  
-  #################
-  final.pred.auc = final.pred.auc[-1,]
-  final.pred.auc = data.frame(fold, auc = final.pred.auc$value)
-  
-  final.pred.micro.auc = final.pred.micro.auc[-1,]
-  final.pred.micro.auc = data.frame(fold, micro.auc = final.pred.micro.auc$value)
-  
-  final.pred.macro.auc = final.pred.macro.auc[-1,]
-  final.pred.macro.auc = data.frame(fold, macro.auc = final.pred.macro.auc$value)
-  
-  setwd(parameters$Folders$folderTested)
-  write.csv(final.pred.auc, "bin-auc.csv", row.names = FALSE)  
-  write.csv(final.pred.macro.auc, "bin-macro-auc.csv", row.names = FALSE)  
-  write.csv(final.pred.micro.auc, "bin-micro-auc.csv", row.names = FALSE)  
-  
-  avaliado.final = avaliado.final[,-1]
-  names(avaliado.final) = nomes
-  avaliado.final = cbind(measures, avaliado.final)
-  setwd(Folder.Tested.Split)
-  write.csv(avaliado, paste("Evaluated-Fold-", f, ".csv", sep=""),
-            row.names = FALSE)
-  
-  # calculando a média dos 10 folds para cada medida
-  media = data.frame(apply(avaliado.final[,-1], 1, mean))
-  media = cbind(measures, media)
-  names(media) = c("Measures", "Mean10Folds")
-  
-  setwd(parameters$Folders$folderTested)
-  write.csv(media, "Mean10Folds.csv", row.names = FALSE)
-  
-  mediana = data.frame(apply(avaliado.final[,-1], 1, median))
-  mediana = cbind(measures, mediana)
-  names(mediana) = c("Measures", "Median10Folds")
-  
-  setwd(parameters$Folders$folderTested)
-  write.csv(mediana, "Median10Folds.csv", row.names = FALSE)
-  
-  dp = data.frame(apply(avaliado.final[,-1], 1, sd))
-  dp = cbind(measures, dp)
-  names(dp) = c("Measures", "SD10Folds")
-  
-  setwd(parameters$Folders$folderTested)
-  write.csv(dp, "standard-deviation-10-folds.csv", row.names = FALSE)
+  }
   
   gc()
-  cat("\n#############################################################")
-  cat("\n# Python Silhouette: End gather.eval.python.silho          #")
-  cat("\n#############################################################")
+  cat("\n##################################")
+  cat("\n# END FUNCTION EVALUATE          #")
+  cat("\n##################################")
   cat("\n\n\n\n")
 }
 
+
+
+
+###########################################################################
+#
+###########################################################################
+gather.eval.python.silho <- function(parameters){
+  
+  measures = c("accuracy", "average-precision", "clp", "coverage",
+               "F1", "hamming-loss", "macro-AUC", "macro-F1", 
+               "macro-precision", "macro-recall", "margin-loss", 
+               "micro-AUC","micro-F1", "micro-precision",
+               "micro-recall", "mlp", "one-error", "precision", 
+               "ranking-loss", "recall", "subset-accuracy", "wlp")
+  
+  folds = c(0)
+  
+  nomes.preds = c("pred-proba", "thr-05", "thr-lc")
+  
+  i = 1
+  while(i<=length(nomes.preds)){
+    
+    cat("\n\npredicao: ", i)
+    
+    final.roc.auc = data.frame()
+    final.roc.auc.micro = data.frame()
+    final.roc.auc.macro = data.frame()
+    
+    final.auprc.macro = data.frame(fold = c(0), value=c(0))
+    final.auprc.micro = data.frame(fold = c(0), value=c(0))
+    
+    final.runtime = data.frame()
+    final.conf.mat = data.frame(measures)
+    
+    
+    f = 1
+    while(f<=parameters$Config$Number.Folds){
+      
+      cat("\nFold: ", f)
+      
+      ###################################################################
+      folderSplit = paste(parameters$Folders$folderTested,
+                          "/Split-", f, sep = "")
+      
+      #########################################################################
+      confMat = data.frame(read.csv(paste(folderSplit, "/", nomes.preds[i], 
+                                          "-evaluated.csv", sep="")))
+      names(confMat) = c("Measures", "Fold")
+      
+      #########################################################################
+      confMat[is.na(confMat)] <- 0
+      
+      #########################################################################
+      final.conf.mat = cbind(final.conf.mat, confMat$Fold) 
+      folds[f] = paste("Fold-", f, sep="")
+      
+      #########################################################################
+      roc.auc = data.frame(read.csv(paste(folderSplit, "/", nomes.preds[i], 
+                                          "-roc-auc.csv", sep="")))       
+      final.roc.auc = rbind(final.roc.auc, roc.auc)
+      
+      #########################################################################
+      roc.micro.auc = data.frame(read.csv(paste(folderSplit, "/", nomes.preds[i], 
+                                                "-roc-auc-micro.csv", sep="")))       
+      final.roc.auc.micro = rbind(final.roc.auc.micro, roc.micro.auc)
+      
+      #########################################################################
+      roc.macro.auc = data.frame(read.csv(paste(folderSplit, "/", nomes.preds[i], 
+                                                "-roc-auc-macro.csv", sep="")))       
+      final.roc.auc.macro = rbind(final.roc.auc.macro, roc.macro.auc)
+      
+      #########################################################################
+      auprc = data.frame(read.csv(paste(folderSplit, "/", nomes.preds[i], 
+                                        "-auprc.csv", sep="")))       
+      final.auprc.macro = rbind(final.auprc.macro, 
+                                data.frame(fold = f, value = auprc$Macro.AUPRC))
+      final.auprc.micro = rbind(final.auprc.micro, 
+                                data.frame(fold = f, value = auprc$Micro.AUPRC))
+      
+      #################################
+      runtime = data.frame(read.csv(paste(folderSplit, "/runtime-clusters.csv", sep="")))
+      names(runtime) = c("fold", "user.self", "sys.self",
+                         "elapsed","user.child","sys.child")
+      final.runtime = rbind(final.runtime, runtime)
+      
+      #################################
+      f = f + 1
+      gc()
+    } 
+    
+    
+    names(final.conf.mat) = c("Measures", folds)
+    names(final.roc.auc) = c("Fold", "Value")
+    names(final.roc.auc.micro) = c("Fold", "Value")
+    names(final.roc.auc.macro) = c("Fold", "Value")
+    names(final.auprc.micro) = c("Fold", "Value")
+    names(final.auprc.macro) = c("Fold", "Value")
+    final.auprc.macro = final.auprc.macro[-1,]
+    final.auprc.micro = final.auprc.micro[-1,]
+    
+    ###########################################
+    fold = seq(1, parameters$Config$Number.Folds, by =1)
+    
+    ###########################################
+    names(final.conf.mat) = c("Measures", folds)
+    final.conf.mat[is.na(final.conf.mat)] <- 0
+    write.csv(final.conf.mat, 
+              paste(parameters$Folders$folderTested, "/", nomes.preds[i], 
+                    "-Test-Evaluated.csv", sep=""), 
+              row.names = FALSE)
+    
+    #######################
+    media = data.frame(apply(final.conf.mat[,-1], 1, mean))
+    media = cbind(measures, media)
+    names(media) = c("Measures", "Mean10Folds")
+    write.csv(media, 
+              paste(parameters$Folders$folderTested, "/", 
+                    nomes.preds[i], "-Mean10Folds.csv", sep=""), 
+              row.names = FALSE)
+    
+    #######################
+    mediana = data.frame(apply(final.conf.mat[,-1], 1, median))
+    mediana = cbind(measures, mediana)
+    names(mediana) = c("Measures", "Median10Folds")
+    write.csv(mediana, 
+              paste(parameters$Folders$folderTested, "/", 
+                    nomes.preds[i], "-Median10Folds.csv", sep=""), 
+              row.names = FALSE)
+    
+    
+    #######################
+    desvio = data.frame(apply(final.conf.mat[,-1], 1, sd))
+    desvio  = cbind(measures, desvio)
+    names(desvio ) = c("Measures", "Deviation10Folds")
+    write.csv(desvio , 
+              paste(parameters$Folders$folderTested, "/", 
+                    nomes.preds[i], "-Deviation10Folds.csv", sep=""), 
+              row.names = FALSE)
+    
+    ###########################################
+    write.csv(final.roc.auc, 
+              paste(parameters$Folders$folderTested, "/", nomes.preds[i], 
+                    "-roc-auc.csv", sep=""), 
+              row.names = FALSE)
+    
+    ###########################################
+    write.csv(final.roc.auc.micro, 
+              paste(parameters$Folders$folderTested, "/", nomes.preds[i], 
+                    "-roc-auc-micro.csv", sep=""), 
+              row.names = FALSE)
+    
+    ###########################################
+    write.csv(final.roc.auc.macro, 
+              paste(parameters$Folders$folderTested, "/", nomes.preds[i], 
+                    "-roc-auc-macro.csv", sep=""), 
+              row.names = FALSE)
+    
+    ###########################################
+    write.csv(final.auprc.micro, 
+              paste(parameters$Folders$folderTested, "/", nomes.preds[i], 
+                    "-roc-auprc-micro.csv", sep=""), 
+              row.names = FALSE)
+    
+    ###########################################
+    write.csv(final.runtime, 
+              paste(parameters$Folders$folderTested, 
+                    "/runtime-folds.csv", sep=""), 
+              row.names = FALSE)
+    
+    ################
+    i = i + 1
+    gc()
+  }
+  
+  gc()
+  cat("\n########################################################")
+  cat("\n# END EVALUATED                                        #") 
+  cat("\n########################################################")
+  cat("\n\n\n\n")
+}
 
 
 ##################################################################################################

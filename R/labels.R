@@ -1,6 +1,8 @@
-cat("\n\n##############################################")
-  cat("\n# START TEST CHOSEN BEST HYBRID PARTITION    #")
-  cat("\n##############################################\n\n") 
+cat("\n\n########################################################")
+cat("\n# RSCRIPT: START EXECUTE LABELS                          #")
+cat("\n##########################################################\n\n")
+
+
 
 
 ##############################################################################
@@ -15,50 +17,80 @@ cat("\n\n##############################################")
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General   #
 # Public License for more details.                                           #
 #                                                                            #
-# Phd Elaine Cecilia Gatto | Prof. Dr. Ricardo Cerri | Prof. Dr. Mauri       #
-# Ferrandin | Prof. Dr. Celine Vens | PhD Felipe Nakano Kenji                #
+# 1 - PhD Elaine Cecilia Gatto | Prof PhD Ricardo Cerri                      #
+# 2 - Prof PhD Mauri Ferrandin                                               #
+# 3 - Prof PhD Celine Vens | PhD Felipe Nakano Kenji                         #
+# 4 - Prof PhD Jesse Read                                                    #
 #                                                                            #
-# Federal University of São Carlos - UFSCar - https://www2.ufscar.br         #
-# Campus São Carlos - Computer Department - DC - https://site.dc.ufscar.br   #
-# Post Graduate Program in Computer Science - PPGCC                          #
-# http://ppgcc.dc.ufscar.br - Bioinformatics and Machine Learning Group      #
-# BIOMAL - http://www.biomal.ufscar.br                                       #
+# 1 = Federal University of São Carlos - UFSCar - https://www2.ufscar.br     #
+# Campus São Carlos | Computer Department - DC - https://site.dc.ufscar.br | #
+# Post Graduate Program in Computer Science - PPGCC                          # 
+# http://ppgcc.dc.ufscar.br | Bioinformatics and Machine Learning Group      #
+# BIOMAL - http://www.biomal.ufscar.br                                       # 
 #                                                                            #
-# Katholieke Universiteit Leuven Campus Kulak Kortrijk Belgium               #
+# 2 - Federal University of Santa Catarina Campus Blumenau - UFSC            #
+# https://ufsc.br/                                                           #
+#                                                                            #
+# 3 - Katholieke Universiteit Leuven Campus Kulak Kortrijk Belgium           #
 # Medicine Department - https://kulak.kuleuven.be/                           #
 # https://kulak.kuleuven.be/nl/over_kulak/faculteiten/geneeskunde            #
+#                                                                            #
+# 4 - Ecole Polytechnique | Institut Polytechnique de Paris | 1 rue Honoré   #
+# d’Estienne d’Orves - 91120 - Palaiseau - FRANCE                            #
 #                                                                            #
 ##############################################################################
 
 
-cat("\n\nSeting Workspace")
+
+cat("\n################################")
+cat("\n# Set Work Space               #")
+cat("\n###############################\n\n")
 FolderRoot = "~/Labels-Chains-HPML"
 FolderScripts = "~/Labels-Chains-HPML/R"
 
-cat("\n\nLoading source files")
+
+cat("\n########################################")
+cat("\n# Loading R Sources                    #")
+cat("\n########################################\n\n")
+
 setwd(FolderScripts)
 source("libraries.R")
+
 setwd(FolderScripts)
 source("utils.R")
 
-cat("\n\nSeting R Options")
+
+cat("\n########################################")
+cat("\n# R Options Configuration              #")
+cat("\n########################################\n\n")
 options(java.parameters = "-Xmx64g")  # JAVA
 options(show.error.messages = TRUE)   # ERROR MESSAGES
 options(scipen=20)                    # number of places after the comma
 
-cat("\n\nOpening datasets original")
+
+########################################
+parameters = list()
+########################################
+
+
+cat("\n########################################")
+cat("\n# Reading Datasets-Original.csv        #")
+cat("\n########################################\n\n")
 setwd(FolderRoot)
 datasets <- data.frame(read.csv("datasets-original.csv"))
-
-cat("\n\nCreating a list of parameters")
-parameters = list()
-
-# config_file = "/home/biomal/Labels-Chains-HPML/config-files/python/jaccard/ward.D2/silho/lcpjws-GpositiveGO.csv"
+parameters$Datasets.List = datasets
 
 
-cat("\n\nGetting arguments for commnad line")
+cat("\n#####################################")
+cat("\n# GET ARGUMENTS FROM COMMAND LINE   #")
+cat("\n#####################################\n\n")
 args <- commandArgs(TRUE)
+
+
 config_file <- args[1]
+
+
+# config_file = "/home/biomal/Labels-Chains-HPML/config-files-laptop/python/jaccard/ward.D2/silho/labels-GpositiveGO.csv"
 
 
 if(file.exists(config_file)==FALSE){
@@ -228,36 +260,36 @@ if(file.exists(str00)==FALSE){
 
 
 if(parameters$Config$Implementation =="clus"){
-  
-  cat("\n\nRUNNING CLUS\n")  
-  
-  setwd(FolderScripts)
-  source("run-clus.R")
-  
-  timeFinal <- system.time(results <- execute.run.clus(parameters))
-  result_set <- t(data.matrix(timeFinal))
-  setwd(parameters$Folders$folderTested)
-  write.csv(result_set, "Runtime.csv")
-  
-  print(system(paste("rm -r ", diretorios$folderDatasets, sep="")))
-  print(system(paste("rm -r ", diretorios$folderPartitions, sep="")))
-  
-  cat("\n\nCOPY TO GOOGLE DRIVE")
-  origem = parameters$Folders$folderTested
-  destino = paste("nuvem:Test-Best-Hybrid-Partitions/",
-                  parameters$Config$Implementation, "/", 
-                  parameters$Config$Similarity, "/", 
-                  parameters$Config$Criteria, "/", 
-                  parameters$Config$Dataset.Name, sep="")
-  comando1 = paste("rclone -P copy ", origem, " ", destino, sep="")
-  cat("\n", comando1, "\n")
-  a = print(system(comando1))
-  a = as.numeric(a)
-  if(a != 0) {
-    stop("Erro RCLONE")
-    quit("yes")
-  }
-  
+  # 
+  # cat("\n\nRUNNING CLUS\n")  
+  # 
+  # setwd(FolderScripts)
+  # source("run-clus.R")
+  # 
+  # timeFinal <- system.time(results <- execute.run.clus(parameters))
+  # result_set <- t(data.matrix(timeFinal))
+  # setwd(parameters$Folders$folderTested)
+  # write.csv(result_set, "Runtime.csv")
+  # 
+  # print(system(paste("rm -r ", diretorios$folderDatasets, sep="")))
+  # print(system(paste("rm -r ", diretorios$folderPartitions, sep="")))
+  # 
+  # cat("\n\nCOPY TO GOOGLE DRIVE")
+  # origem = parameters$Folders$folderTested
+  # destino = paste("nuvem:Test-Best-Hybrid-Partitions/",
+  #                 parameters$Config$Implementation, "/", 
+  #                 parameters$Config$Similarity, "/", 
+  #                 parameters$Config$Criteria, "/", 
+  #                 parameters$Config$Dataset.Name, sep="")
+  # comando1 = paste("rclone -P copy ", origem, " ", destino, sep="")
+  # cat("\n", comando1, "\n")
+  # a = print(system(comando1))
+  # a = as.numeric(a)
+  # if(a != 0) {
+  #   stop("Erro RCLONE")
+  #   quit("yes")
+  # }
+  # 
   
   # cat("\n####################################################################")
   # cat("\n# Compress folders and files                                       #")
@@ -274,7 +306,7 @@ if(parameters$Config$Implementation =="clus"){
   #                "-", similarity, "-results-tbpma.tar.gz ", 
   #                diretorios$folderRS, sep = "")
   # print(system(str_b))
- 
+  
 } else if(parameters$Config$Implementation=="python"){
   
   cat("\n\nRUNNING PYTHON\n")  
@@ -336,8 +368,8 @@ gc()
 
 
 cat("\n\n############################################################")
-  cat("\n# END Labels Chains HPML                          #")
-  cat("\n############################################################\n\n") 
+cat("\n# END Labels Chains HPML                          #")
+cat("\n############################################################\n\n") 
 cat("\n\n\n\n") 
 
 
