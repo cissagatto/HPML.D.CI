@@ -77,7 +77,8 @@ Criteria.2 = c("s")
 
 
 ######################################################
-FolderCF = paste(FolderRoot, "/config-files-laptop", sep="")
+#FolderCF = paste(FolderRoot, "/config-files-laptop", sep="")
+FolderCF = paste(FolderRoot, "/config-files-apptainer", sep="")
 if(dir.exists(FolderCF)==FALSE){dir.create(FolderCF)}
 
 # IMPLEMENTAÇÃO
@@ -133,20 +134,20 @@ while(p<=length(Implementation.1)){
           # write("Dataset_Path, /home/elaine/Datasets", 
           #      file = output.file, append = TRUE)
           
-          write("Dataset_Path, /home/biomal/Datasets", 
+          #write("Dataset_Path, /home/biomal/Datasets", 
+          #    file = output.file, append = TRUE)
+          
+          write("Dataset_Path, /Datasets", 
               file = output.file, append = TRUE)
           
-          # write("Dataset_Path, /Datasets", 
-          #      file = output.file, append = TRUE)
-          
-          folder.name = paste("/dev/shm/", name, sep = "")
-          # folder.name = paste("/tmp/", name, sep = "")
+          #folder.name = paste("/dev/shm/", name, sep = "")
+          folder.name = paste("/tmp/", name, sep = "")
           
           str1 = paste("Temporary_Path, ", folder.name, sep="")
           write(str1,file = output.file, append = TRUE)
           
           # /home/biomal
-          str.1 = paste("/home/biomal/2-Best-Partitions/HPML.A/", 
+          str.1 = paste("/2-Best-Partitions/HPML.A/", 
                         Similarity.1[s], "/",
                         Dendrogram.1[f], "/", 
                         Criteria.1[w],
@@ -174,7 +175,7 @@ while(p<=length(Implementation.1)){
           
           write("Number_Folds, 10", file = output.file, append = TRUE)
           
-          write("Number_Cores, 1", file = output.file, append = TRUE)
+          write("Number_Cores, 10", file = output.file, append = TRUE)
           
           close(output.file)
           

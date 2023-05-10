@@ -319,12 +319,36 @@ if(parameters$Config$Implementation =="clus"){
   setwd(parameters$Folders$folderTested)
   write.csv(result_set, "Runtime.csv")
   
-  write.csv(result_set, "Final-Runtime.csv")
-  x.minutos = (1 * as.numeric(result_set[3]))/60
-  write(x.minutos, "minutos.txt")
+  # write.csv(result_set, "Final-Runtime.csv")
+  # x.minutos = (1 * as.numeric(result_set[3]))/60
+  # write(x.minutos, "minutos.txt")
   
   print(system(paste("rm -r ", diretorios$folderDatasets, sep="")))
   print(system(paste("rm -r ", diretorios$folderPartitions, sep="")))
+  
+  
+  cat("\n\n###################################################################")
+  cat("\n# LOCAL: COMPRESS RESULTS                                      #")
+  cat("\n#####################################################################\n\n")
+  str3 = paste("tar -zcvf ", parameters$Folders$folderTested, "/",
+               parameters$Dataset.Info$Name, "-results-labels.tar.gz ",
+               parameters$Folders$folderTested, sep="")
+  print(system(str3))
+  
+  
+  cat("\n\n###################################################################")
+  cat("\n# ====> GPC: COPY TO HOME                                     #")
+  cat("\n#####################################################################\n\n")
+  
+  str0 = "~/Labels-Chains-HPML/Reports/"
+  if(dir.exists(str0)==FALSE){dir.create(str0)}
+  
+  str3 = paste(parameters$Folders$folderTested, "/",
+               parameters$Dataset.Info$Name, "-results-labels.tar.gz", sep="")
+  
+  str4 = paste("cp ", str3, " ", str0, sep="")
+  print(system(str4))
+  
   
   cat("\n\nCOPY TO GOOGLE DRIVE")
   origem = parameters$Folders$folderTested

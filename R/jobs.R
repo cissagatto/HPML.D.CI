@@ -257,7 +257,7 @@ while(p<=length(Implementation.1)){
           
           write("", file = output.file, append = TRUE)
           write("echo COPYING SINGULARITY", file = output.file, append = TRUE)
-          str.30 = paste("cp /home/u704616/Experimentos-6.sif ", scratch.name, sep ="")
+          str.30 = paste("cp /home/u704616/Experimentos-8.sif ", scratch.name, sep ="")
           write(str.30 , file = output.file, append = TRUE)
           
           
@@ -331,7 +331,7 @@ while(p<=length(Implementation.1)){
           write(" ", file = output.file, append = TRUE)
           write("echo INICIANDO INSTANCIA", file = output.file, append = TRUE)
           str = paste("singularity instance start --bind ~/.config/rclone/:/root/.config/rclone ", 
-                      scratch.name, "/Experimentos-6.sif EXPLa", a, sep="")
+                      scratch.name, "/Experimentos-8.sif EXPLa", a, sep="")
           write(str, file = output.file, append = TRUE)
           
           
